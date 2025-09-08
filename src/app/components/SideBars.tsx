@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export default function SideBars() {
   return (
-    <div className="fixed h-[calc(100vh-5rem)] w-30 border-r border-gray-400 flex flex-col gap-3 items-center justify-evenly">
+    <div className="fixed h-[calc(100vh-5rem)] w-30 border-r border-gray-400 bg-gray-50 flex flex-col gap-3 items-center justify-evenly">
       <a className="cursor-pointer" href="http://strava.com/" target="_blank">
         <Image
           src={"/logo_strava_icon.png"}
