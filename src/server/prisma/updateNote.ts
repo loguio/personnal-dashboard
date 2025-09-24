@@ -1,5 +1,5 @@
 "use server";
-import { prisma } from "@/prisma/PrismaClient";
+import { prisma } from "@/providers/prisma/PrismaClient";
 
 export default async function updateNote(note: string) {
   const existingNote = await prisma.note.findFirst();
