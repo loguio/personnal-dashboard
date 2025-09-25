@@ -7,10 +7,12 @@ import { debounce } from "lodash";
 import { useSearchParams } from "next/navigation";
 import getAuthorization from "@/server/strava/getAuthorization";
 import getRun from "@/server/strava/getRun";
+import getToken from "@/server/prisma/getToken";
 
 export default function Home() {
   const [note, setNote] = useState<string>("");
-  const [accessToken, setAccessToken] = useState<string>("");
+  const [accessToken, setAccessToken] = useState<string>();
+
   const debouncedSendRequest = debounce(updateNote, 300);
 
   const searchParams = useSearchParams();
@@ -18,12 +20,11 @@ export default function Home() {
 
   useEffect(() => {
     retrieveNote();
-    const token = sessionStorage.getItem("accessToken");
-    if (!token) return;
-    setAccessToken(token);
+    retrieveToken();
   }, []);
   useEffect(() => {
     if (accessToken) retrieveRuns(accessToken);
+    console.log(accessToken);
   }, [accessToken]);
 
   useEffect(() => {
@@ -33,8 +34,31 @@ export default function Home() {
   }, [token]);
 
   const getNewToken = async (token: string) => {
-    setAccessToken((await getAuthorization(token)).access_token);
+    const newToken = await getAuthorization({ accessToken: token });
+    if (newToken) {
+      sessionStorage.setItem("accessToken", newToken.access_token);
+      setAccessToken(newToken.access_token);
+    }
   };
+  const retrieveToken = async () => {
+    try {
+      const tokens = await getToken();
+      if (tokens && tokens.stravaExpiredDate.getTime() < Date.now()) {
+        const newToken = await getAuthorization({
+          refreshToken: tokens.stravaRefreshToken,
+        });
+        if (newToken) {
+          setAccessToken(newToken.access_token);
+          sessionStorage.setItem("accessToken", newToken.access_token);
+        }
+        return;
+      }
+      const token = sessionStorage.getItem("accessToken");
+      if (!token) return;
+      setAccessToken(token);
+    } catch (e) {}
+  };
+
   const retrieveNote = async () => {
     setNote((await getNote())?.text ?? "");
   };
@@ -84,9 +108,12 @@ export default function Home() {
           </Item>
         </Grid>
         <Item>
-          <a href="https://www.strava.com/oauth/authorize?client_id=176821&redirect_uri=http%3A%2F%2Flocalhost%3A3000&response_type=code&approval_prompt=auto&scope=activity%3Aread_all">
-            Se connecter à Strava
-          </a>
+          {!accessToken && (
+            <a href="https://www.strava.com/oauth/authorize?client_id=176821&redirect_uri=http%3A%2F%2Flocalhost%3A3000&response_type=code&approval_prompt=auto&scope=activity%3Aread_all">
+              Se connecter à Strava
+            </a>
+          )}
+          {accessToken && <p>Strava est connecté {accessToken}hh</p>}
         </Item>
       </Grid>
     </div>

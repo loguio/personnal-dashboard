@@ -15,6 +15,16 @@ datasource db {
 }
 
 model Note {
-  id String @id @default(uuid())
-  text String
+  id    String @id @default(uuid())
+  text  String
+
+  @@map("note")
+}
+
+model Tokens {
+  id                  String @id @default(uuid())
+  stravaRefreshToken  String @map("strava_refresh_token")
+  stravaExpiredDate   DateTime @map("strava_expired_date")
+
+  @@map("tokens")
 }
